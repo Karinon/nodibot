@@ -1,7 +1,7 @@
 var weather = require('openweathermap');
 
 exports.getWeather = function (requestor, title, message, say) {
-  /*var index = Math.floor((Math.random() * (boa.list.length)));  
+  /*var index = Math.floor((Math.random() * (boa.list.length)));
   var title = boa.list[index].toUpperCase();*/
   var check = message.split(' ');
   var abfrage = message.substring(message.indexOf(' ')+1).replace(/[\s]+/g, "_");
@@ -40,15 +40,37 @@ exports.getWeather = function (requestor, title, message, say) {
     }
     var str = requestor +', in ' + json['name'] + ' sind es gerade ' + json['main']['temp'] + ' Grad, SIE ' + title + '!' +
                 ' Die API beschreibt die Wetterlage als "' + json['weather'][0]['description'] + '". '
-    if('rain' in json && '3h' in json['rain']) {
-      str = str + "Die naechsten drei Stunden fallen " + json['rain']['3h'] + "mm Regen."
-    } else if('snow' in json && '3h' in json['snow']) {
-      str = str + "Die naechsten drei Stunden fallen " + json['snow']['3h'] + "mm Schnee."
+    if('rain' in json) {
+      appendPrecipitation(json, 'rain', "Regen", function(prec) {
+        str = str + prec;
+      });
+    } else if('snow' in json) {
+      appendPrecipitation(json, 'snow', "Schnee", function(prec) {
+        str = str + prec;
+      });
     } else {
-      str = str + "Die naechsten drei Stunden gibts angeblich keinen Niederschlag."
+      str = str + "Die naechsten paar Stunden gibts angeblich keinen Niederschlag."
     }
-    say(str); 
+    say(str);
   });
+}
+
+function appendPrecipitation(json, key, word, callback) {
+  var str = "";
+  if(key in json) {
+    if('1h' in json[key]) {
+      str = "Die naechste Stunde fallen " + json[key]['1h'] + "mm " + word +".";
+    } else if('3h' in json['rain']) {
+      str = "Die naechsten 3 Stunden fallen " + json[key]['3h'] + "mm " + word +".";
+    } else if('6h' in json['rain']) {
+      str = "Die naechsten 6 Stunden fallen " + json[key]['6h'] + "mm " + word +".";
+    } else if('12h' in json['rain']) {
+      str = "Die naechsten 12 Stunden fallen " + json[key]['12h'] + "mm " + word +".";
+    } else if('day' in json['rain']) {
+      str = "Die naechsten 24 Stunden fallen " + json[key]['day'] + "mm " + word +".";
+    }
+  }
+  callback(str)
 }
 
 function parseWeatherForecast(json, day, say) {
